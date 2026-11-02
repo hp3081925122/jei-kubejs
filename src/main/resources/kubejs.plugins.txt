@@ -1,1 +1,1 @@
-com.hp.jei_kubejs.kubejs.JeiKubeJSPlugin client
+com.hp.jei_kubejs.kubejs.JeiKubeJSPlugin jei

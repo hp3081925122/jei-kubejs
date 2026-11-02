@@ -2,14 +2,14 @@ package com.hp.jei_kubejs.kubejs;
 
 import com.hp.jei_kubejs.JeiKubejs;
 import com.hp.jei_kubejs.data.CategoryDef;
-import dev.latvian.mods.kubejs.client.ClientKubeEvent;
+import dev.latvian.mods.kubejs.event.EventJS;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class RegisterCategoriesKubeEvent implements ClientKubeEvent {
+public class RegisterCategoriesKubeEvent extends EventJS {
     private final Map<ResourceLocation, CategoryDef> categories = new LinkedHashMap<>();
 
     /** event.create('mypack:altar', cat => cat.title(...).size(150, 60)...) */

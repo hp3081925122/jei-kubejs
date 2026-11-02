@@ -50,8 +50,12 @@ public class ScriptRecipeCategory implements IRecipeCategory<RecipeData> {
         this.def = def;
         this.flameFilled = guiHelper.getRecipeFlameFilled();
         this.recipeType = new RecipeType<>(def.getId(), RecipeData.class);
-        // 没设图标时返回 null，JEI 会改用第一个催化剂作图标
-        this.icon = def.getIcon().isEmpty() ? null : guiHelper.createDrawableItemStack(def.getIcon());
+        // 没设图标时用第一个催化剂，再没有就用空白图标（与 1.21.1 版显示一致，且不依赖 JEI 对 null 的处理）
+        ItemStack iconStack = def.getIcon();
+        if (iconStack.isEmpty()) {
+            iconStack = def.getCatalysts().stream().filter(s -> !s.isEmpty()).findFirst().orElse(ItemStack.EMPTY);
+        }
+        this.icon = iconStack.isEmpty() ? guiHelper.createBlankDrawable(16, 16) : guiHelper.createDrawableItemStack(iconStack);
 
         for (ElementDef element : def.getElements()) {
             if (element instanceof ElementDef.Texture t) {
@@ -120,47 +124,44 @@ public class ScriptRecipeCategory implements IRecipeCategory<RecipeData> {
     public void createRecipeExtras(IRecipeExtrasBuilder builder, RecipeData recipe, IFocusGroup focuses) {
         for (ElementDef element : def.getElements()) {
             try {
-                switch (element) {
-                    case ElementDef.Arrow a -> {
-                        if (a.ticks() > 0) {
-                            builder.addAnimatedRecipeArrow(a.ticks()).setPosition(a.x(), a.y());
-                        } else {
-                            builder.addRecipeArrow().setPosition(a.x(), a.y());
-                        }
+                // Java 17 没有 switch 模式匹配，用 instanceof 链（行为与 1.21.1 版一致）
+                if (element instanceof ElementDef.Arrow a) {
+                    if (a.ticks() > 0) {
+                        builder.addAnimatedRecipeArrow(a.ticks()).setPosition(a.x(), a.y());
+                    } else {
+                        builder.addRecipeArrow().setPosition(a.x(), a.y());
                     }
-                    case ElementDef.Flame f -> {
-                        if (f.ticks() > 0) {
-                            builder.addAnimatedRecipeFlame(f.ticks()).setPosition(f.x(), f.y());
-                        } else {
-                            builder.addDrawable(flameFilled, f.x(), f.y());
-                        }
+                } else if (element instanceof ElementDef.Flame f) {
+                    if (f.ticks() > 0) {
+                        builder.addAnimatedRecipeFlame(f.ticks()).setPosition(f.x(), f.y());
+                    } else {
+                        builder.addDrawable(flameFilled, f.x(), f.y());
                     }
-                    case ElementDef.PlusSign p -> builder.addRecipePlusSign().setPosition(p.x(), p.y());
-                    case ElementDef.Texture t -> builder.addDrawable(textureCache.get(t), t.x(), t.y());
-                    case ElementDef.Progress p -> builder.addDrawable(textureCache.get(p), p.x(), p.y());
-                    case ElementDef.Tooltip t -> builder.addTooltipArea(t.x(), t.y(), t.width(), t.height())
-                            .setTooltip(t.lines());
-                    case ElementDef.TooltipArea t -> {
-                        List<Component> lines = recipe.getTooltips().get(t.name());
-                        if (lines != null && !lines.isEmpty()) {
-                            builder.addTooltipArea(t.x(), t.y(), t.width(), t.height()).setTooltip(lines);
-                        }
+                } else if (element instanceof ElementDef.PlusSign p) {
+                    builder.addRecipePlusSign().setPosition(p.x(), p.y());
+                } else if (element instanceof ElementDef.Texture t) {
+                    builder.addDrawable(textureCache.get(t), t.x(), t.y());
+                } else if (element instanceof ElementDef.Progress p) {
+                    builder.addDrawable(textureCache.get(p), p.x(), p.y());
+                } else if (element instanceof ElementDef.Tooltip t) {
+                    builder.addTooltipArea(t.x(), t.y(), t.width(), t.height()).setTooltip(t.lines());
+                } else if (element instanceof ElementDef.TooltipArea t) {
+                    List<Component> lines = recipe.getTooltips().get(t.name());
+                    if (lines != null && !lines.isEmpty()) {
+                        builder.addTooltipArea(t.x(), t.y(), t.width(), t.height()).setTooltip(lines);
                     }
-                    case ElementDef.ScrollText s -> {
-                        List<Component> lines = recipe.getScrollTexts().get(s.name());
-                        if (lines != null && !lines.isEmpty()) {
-                            // JEI 参数顺序：宽、高、x、y
-                            builder.addScrollBoxWidget(s.width(), s.height(), s.x(), s.y())
-                                    .setContents(List.<FormattedText>copyOf(lines));
-                        }
+                } else if (element instanceof ElementDef.ScrollText s) {
+                    List<Component> lines = recipe.getScrollTexts().get(s.name());
+                    if (lines != null && !lines.isEmpty()) {
+                        // JEI 参数顺序：宽、高、x、y
+                        builder.addScrollBoxWidget(s.width(), s.height(), s.x(), s.y())
+                                .setContents(List.<FormattedText>copyOf(lines));
                     }
-                    case ElementDef.ScrollPanel p -> {
-                        IScrollBoxWidget box = builder.addScrollBoxWidget(p.width(), p.height(), p.x(), p.y());
-                        box.setContents(new CallbackDrawable(box.getContentAreaWidth(), p.contentHeight(), p.callback(), recipe));
-                    }
-                    case ElementDef.Label ignored -> {}
-                    case ElementDef.Text ignored -> {}
+                } else if (element instanceof ElementDef.ScrollPanel p) {
+                    IScrollBoxWidget box = builder.addScrollBoxWidget(p.width(), p.height(), p.x(), p.y());
+                    box.setContents(new CallbackDrawable(box.getContentAreaWidth(), p.contentHeight(), p.callback(), recipe));
                 }
+                // Label / Text 在 draw 里画
             } catch (Exception e) {
                 JeiKubejs.LOGGER.error("[JEI KubeJS] 分类 {} 的元素 {} 创建失败", def.getId(), element, e);
             }

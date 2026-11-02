@@ -1,11 +1,10 @@
 package com.hp.jei_kubejs.kubejs;
 
-import dev.latvian.mods.kubejs.event.EventGroupRegistry;
-import dev.latvian.mods.kubejs.plugin.KubeJSPlugin;
+import dev.latvian.mods.kubejs.KubeJSPlugin;
 
-public class JeiKubeJSPlugin implements KubeJSPlugin {
+public class JeiKubeJSPlugin extends KubeJSPlugin {
     @Override
-    public void registerEvents(EventGroupRegistry registry) {
-        registry.register(JeiKubeJSEvents.GROUP);
+    public void registerEvents() {
+        JeiKubeJSEvents.GROUP.register();
     }
 }

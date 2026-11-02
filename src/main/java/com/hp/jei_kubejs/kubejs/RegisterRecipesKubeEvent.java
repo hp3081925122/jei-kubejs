@@ -5,12 +5,12 @@ import com.hp.jei_kubejs.data.CategoryDef;
 import com.hp.jei_kubejs.data.RecipeData;
 import com.hp.jei_kubejs.data.RecipeMapper;
 import com.hp.jei_kubejs.data.RecipeView;
-import dev.latvian.mods.kubejs.client.ClientKubeEvent;
+import dev.latvian.mods.kubejs.event.EventJS;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class RegisterRecipesKubeEvent implements ClientKubeEvent {
+public class RegisterRecipesKubeEvent extends EventJS {
     private final Map<ResourceLocation, CategoryDef> categories;
     private final List<RecipeData> recipes = new ArrayList<>();
 
@@ -63,14 +63,14 @@ public class RegisterRecipesKubeEvent implements ClientKubeEvent {
             return 0;
         }
 
-        List<RecipeHolder<?>> holders = (List) level.getRecipeManager().getAllRecipesFor((RecipeType) type);
+        List<Recipe<?>> found = (List) level.getRecipeManager().getAllRecipesFor((RecipeType) type);
         int added = 0;
-        for (RecipeHolder<?> holder : holders) {
+        for (Recipe<?> r : found) {
             RecipeData recipe = new RecipeData(def);
             try {
-                mapper.map(new RecipeView(holder, level.registryAccess()), recipe);
+                mapper.map(new RecipeView(r, level.registryAccess()), recipe);
             } catch (Exception e) {
-                JeiKubejs.LOGGER.error("[JEI KubeJS] 处理配方 {} 时脚本出错，已跳过", holder.id(), e);
+                JeiKubejs.LOGGER.error("[JEI KubeJS] 处理配方 {} 时脚本出错，已跳过", r.getId(), e);
                 continue;
             }
             if (!recipe.isSkipped()) {
@@ -78,7 +78,7 @@ public class RegisterRecipesKubeEvent implements ClientKubeEvent {
                 added++;
             }
         }
-        JeiKubejs.LOGGER.info("[JEI KubeJS] 从 {} 读取 {} 条配方，加入分类 {} 共 {} 条", recipeType, holders.size(), category, added);
+        JeiKubejs.LOGGER.info("[JEI KubeJS] 从 {} 读取 {} 条配方，加入分类 {} 共 {} 条", recipeType, found.size(), category, added);
         return added;
     }
 
