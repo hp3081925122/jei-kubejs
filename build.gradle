@@ -1,10 +1,23 @@
 // 当前文件只保留最小的 Forge 开发、构建和运行配置。
+buildscript {
+    repositories {
+        // MixinGradle：开发环境里把依赖模组（如 Architectury）的 mixin refmap 从 SRG 重映射到官方名，否则 runClient 起不来。
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
+    }
+}
+
 plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
 }
+
+apply plugin: 'org.spongepowered.mixin'
 
 repositories {
     maven {
