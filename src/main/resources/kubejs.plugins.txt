@@ -1,0 +1,1 @@
+com.hp.jei_kubejs.kubejs.JeiKubeJSPlugin client
