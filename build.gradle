@@ -20,6 +20,7 @@ plugins {
 apply plugin: 'org.spongepowered.mixin'
 
 repositories {
+    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
     maven {
         url = 'https://www.cursemaven.com'
         content {
@@ -75,8 +76,14 @@ minecraft {
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
+mixin {
+    add sourceSets.main, "${project.mod_id}.refmap.json"
+    config "${project.mod_id}.mixins.json"
+}
+
 dependencies {
     minecraft "net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     implementation fg.deobf("curse.maven:jei-238222:8778011")
     // KubeJS 6、Architectury 与 Rhino，坐标与 GatewaysJS 1.20.1 保持一致。
     implementation fg.deobf("curse.maven:kubejs-238086:5853326")
