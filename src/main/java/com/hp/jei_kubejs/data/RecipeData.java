@@ -18,6 +18,7 @@ public class RecipeData {
     private final Map<String, Component> texts = new LinkedHashMap<>();
     private final Map<String, List<Component>> tooltips = new LinkedHashMap<>();
     private final Map<String, List<Component>> scrollTexts = new LinkedHashMap<>();
+    private final Map<String, List<Component>> slotTooltips = new LinkedHashMap<>();
     /** 脚本自定义数据，供 onDraw / onTooltip 回调读取 */
     private final Map<String, Object> data = new LinkedHashMap<>();
     private boolean skipped;
@@ -86,6 +87,15 @@ public class RecipeData {
     }
 
     public Map<String, List<Component>> getScrollTexts() { return scrollTexts; }
+
+    public RecipeData slotTooltip(String name, Component... lines) {
+        if (checkSlot(name)) {
+            slotTooltips.put(name, List.of(lines));
+        }
+        return this;
+    }
+
+    public Map<String, List<Component>> getSlotTooltips() { return slotTooltips; }
 
     /** 在 fromRecipeType 回调里调用：这条配方不显示 */
     public RecipeData skip() {
