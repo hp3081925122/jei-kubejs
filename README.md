@@ -4,8 +4,12 @@
 
 Create custom JEI recipe categories from KubeJS scripts — layout, slots, drawables, recipes, catalysts and screen click areas — without writing Java.
 
-- Minecraft 1.21.1 / NeoForge 21.1+
-- 依赖 Requires: JEI 19.x, KubeJS 2101 (+ Rhino)
+| 版本 Version | 加载器 Loader | 依赖 Requires | 分支 Branch |
+|---|---|---|---|
+| Minecraft 1.21.1 | NeoForge 21.1+ | JEI 19.x, KubeJS 2101 (+ Rhino) | `main` |
+| Minecraft 1.20.1 | Forge 47+ | JEI 15.x, KubeJS 2001 (+ Rhino, Architectury) | `1201forge` |
+
+- 两个版本的脚本写法完全相同，本文档和示例脚本对两个版本都适用。The script API is identical on both versions; this README and the examples apply to both.
 - 只在客户端运行，脚本放在 `kubejs/client_scripts/`。Client-side only; put scripts in `kubejs/client_scripts/`.
 
 完整示例 Full example: [`examples/all_features.js`](examples/all_features.js)
@@ -92,7 +96,9 @@ event.fromRecipeType('mypack:smelting_copy', 'minecraft:smelting', (recipe, r) =
 ## 注意 Notes
 
 - 滚动区里的物品只能显示，不能点击查询；需要查询的物品请放在槽位里。
-- 1.21.1 会把服务端配方同步到客户端，所以 `fromRecipeType` 能读到服务端的配方。1.21.2 及以后的版本不再同步。
+- 1.20.1 和 1.21.1 都会把服务端配方同步到客户端，所以 `fromRecipeType` 能读到服务端的配方。1.21.2 及以后的版本不再同步。
+- `recipe.recipe()` 返回原版或模组自己的配方对象。它的方法属于原版或那个模组，不属于本模组，不同 MC 版本的方法名可能不同，跨版本使用前请分别确认。本模组自己的 `id()`、`inputs()`、`input(i)`、`output()` 在两个版本里相同。
+- `recipe.recipe()` returns the vanilla or mod recipe object itself; its methods may differ between Minecraft versions. The wrappers `id()`, `inputs()`, `input(i)` and `output()` are the same on both.
 - ProbeJS 会直接读取本模组的 Java 类来生成类型提示。
 
 License: All Rights Reserved（与 `gradle.properties` 中 `mod_license` 一致）
