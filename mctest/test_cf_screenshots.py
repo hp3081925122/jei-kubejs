@@ -54,12 +54,12 @@ for cid in ("mypack:altar", "mypack:smelting_copy", "mypack:library"):
     screenshot("cf_%s" % cid.split(":")[1])
     leave_gui()
 
-# 悬停提示：祭坛箭头提示、产物槽附加提示
+# 悬停提示：祭坛箭头提示、产物槽 slotTooltip
 show("mypack:altar")
 hover_at(82, 26)
 screenshot("cf_altar_tooltip_arrow")
-hover_at(131, 41)
-screenshot("cf_altar_tooltip_output")
+hover_at(118, 26)
+screenshot("cf_altar_slot_tooltip")
 leave_gui()
 
 # 图书馆：魔力条提示、两个滚动区滚动后
