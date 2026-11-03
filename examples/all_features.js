@@ -80,12 +80,12 @@ JEIKubeJSEvents.registerCategories(event => {
   event.create('mypack:brewing_copy', cat => cat
     .title(Text.of('Brewing (script)'))
     .icon('minecraft:brewing_stand')
-    .size(110, 26)
-    .inputSlot('potion', 1, 4)
-    .plus(20, 6)
-    .inputSlot('ingredient', 36, 4)
-    .arrow(57, 4, 200)
-    .outputSlot('out', 88, 4)
+    .size(110, 28)
+    .inputSlot('potion', 1, 5)
+    .plus(20, 7)
+    .inputSlot('ingredient', 36, 5)
+    .arrow(57, 5, 200)
+    .outputSlot('out', 88, 5)
     .catalyst('minecraft:brewing_stand'))
 })
 

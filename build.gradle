@@ -62,9 +62,6 @@ dependencies {
     implementation "curse.maven:rhino-416294:7104526"
     implementation "curse.maven:just-enough-characters-250702:8117474"
     implementation "curse.maven:jade-324717:8591319"
-    // 开发环境加入 Advanced Loot Info，查看战利品表和村民交易信息。
-    implementation "curse.maven:advanced-core-info-1661923:9002615"
-    implementation "curse.maven:advanced-loot-info-1205426:9002619"
 }
 
 tasks.withType(ProcessResources).configureEach {

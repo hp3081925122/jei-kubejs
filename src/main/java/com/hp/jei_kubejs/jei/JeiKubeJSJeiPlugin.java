@@ -18,6 +18,7 @@ import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.recipe.IRecipeManager;
 import mezz.jei.api.runtime.IJeiRuntime;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -37,6 +38,7 @@ public class JeiKubeJSJeiPlugin implements IModPlugin {
 
     private Map<ResourceLocation, ScriptRecipeCategory> categories = Map.of();
     private RegisterRecipesKubeEvent deferredEvent;
+    private IJeiRuntime pendingRuntime;
 
     @Override
     public ResourceLocation getPluginUid() {
@@ -97,15 +99,23 @@ public class JeiKubeJSJeiPlugin implements IModPlugin {
         if (event == null) {
             return;
         }
-        IRecipeManager manager = runtime.getRecipeManager();
-        List<RecipeData> recipes = event.runDeferred(manager, runtime.getJeiHelpers().getFocusFactory().getEmptyFocusGroup());
-        groupByCategory(recipes).forEach((id, list) -> manager.addRecipes(categories.get(id).getRecipeType(), list));
-        JeiKubejs.LOGGER.info("[JEI KubeJS] 运行时从 JEI 分类添加了 {} 条配方", recipes.size());
+        pendingRuntime = runtime;
+        Minecraft.getInstance().tell(() -> {
+            if (pendingRuntime != runtime) {
+                return;
+            }
+            pendingRuntime = null;
+            IRecipeManager manager = runtime.getRecipeManager();
+            List<RecipeData> recipes = event.runDeferred(manager, runtime.getJeiHelpers().getFocusFactory().getEmptyFocusGroup());
+            groupByCategory(recipes).forEach((id, list) -> manager.addRecipes(categories.get(id).getRecipeType(), list));
+            JeiKubejs.LOGGER.info("[JEI KubeJS] 运行时从 JEI 分类添加了 {} 条配方", recipes.size());
+        });
     }
 
     @Override
     public void onRuntimeUnavailable() {
         deferredEvent = null;
+        pendingRuntime = null;
     }
 
     private static Map<ResourceLocation, List<RecipeData>> groupByCategory(List<RecipeData> recipes) {
