@@ -24,10 +24,11 @@ public final class CategoryValidator {
         }
         for (SlotDef slot : def.getSlots().values()) {
             // 输出槽背景是 26x26（向外扩 5 像素），普通槽 18x18（向外扩 1 像素）
-            int pad = slot.role() == SlotDef.Role.OUTPUT ? 5 : 1;
-            int size = slot.role() == SlotDef.Role.OUTPUT ? 26 : 18;
+            int pad = slot.role() == SlotDef.Role.OUTPUT && !slot.isTank() ? 5 : 1;
+            int w = slot.isTank() ? slot.width() + 2 : slot.role() == SlotDef.Role.OUTPUT ? 26 : 18;
+            int h = slot.isTank() ? slot.height() + 2 : slot.role() == SlotDef.Role.OUTPUT ? 26 : 18;
             if (slot.x() - pad < 0 || slot.y() - pad < 0
-                    || slot.x() - pad + size > def.getWidth() || slot.y() - pad + size > def.getHeight()) {
+                    || slot.x() - pad + w > def.getWidth() || slot.y() - pad + h > def.getHeight()) {
                 JeiKubejs.LOGGER.warn("[JEI KubeJS] 分类 {} 的槽位 '{}' 在 ({}, {}) 超出分类范围 {}x{}",
                         id, slot.name(), slot.x(), slot.y(), def.getWidth(), def.getHeight());
             }

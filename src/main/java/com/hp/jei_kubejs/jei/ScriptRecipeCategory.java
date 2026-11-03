@@ -7,6 +7,7 @@ import com.hp.jei_kubejs.data.DrawContext;
 import com.hp.jei_kubejs.data.ElementDef;
 import com.hp.jei_kubejs.data.RecipeData;
 import com.hp.jei_kubejs.data.SlotDef;
+import mezz.jei.api.gui.builder.IIngredientAcceptor;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.builder.IRecipeSlotBuilder;
 import mezz.jei.api.gui.builder.ITooltipBuilder;
@@ -16,6 +17,7 @@ import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.gui.widgets.IRecipeExtrasBuilder;
 import mezz.jei.api.gui.widgets.IScrollBoxWidget;
 import mezz.jei.api.helpers.IGuiHelper;
+import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
@@ -25,9 +27,11 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,23 +104,50 @@ public class ScriptRecipeCategory implements IRecipeCategory<RecipeData> {
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, RecipeData recipe, IFocusGroup focuses) {
         // 按分类里定义的槽位顺序布局；配方没填的槽位只画空格子
+        Map<String, IRecipeSlotBuilder> built = new HashMap<>();
         for (SlotDef slot : def.getSlots().values()) {
             IRecipeSlotBuilder slotBuilder = builder.addSlot(toJei(slot.role()), slot.x(), slot.y())
                     .setSlotName(slot.name());
-            if (slot.role() == SlotDef.Role.OUTPUT) {
-                slotBuilder.setOutputSlotBackground();
+            built.put(slot.name(), slotBuilder);
+            List<ITypedIngredient<?>> copied = recipe.getCopied().get(slot.name());
+            if (slot.isTank()) {
+                slotBuilder.setFluidRenderer(slot.capacity(), false, slot.width(), slot.height())
+                        .setBackground(new TankBackground(slot.width() + 2, slot.height() + 2), -1, -1);
+                List<RecipeData.FluidEntry> fluids = recipe.getFluids().get(slot.name());
+                if (copied != null) {
+                    slotBuilder.addTypedIngredients(copied);
+                } else if (fluids != null) {
+                    for (RecipeData.FluidEntry fluid : fluids) {
+                        slotBuilder.addFluidStack(fluid.fluid(), fluid.amount());
+                    }
+                }
             } else {
-                slotBuilder.setStandardSlotBackground();
-            }
-            List<ItemStack> content = recipe.getSlotContents().get(slot.name());
-            if (content != null && !content.isEmpty()) {
-                slotBuilder.addItemStacks(content);
+                if (slot.role() == SlotDef.Role.OUTPUT) {
+                    slotBuilder.setOutputSlotBackground();
+                } else {
+                    slotBuilder.setStandardSlotBackground();
+                }
+                List<ItemStack> content = recipe.getSlotContents().get(slot.name());
+                if (copied != null) {
+                    slotBuilder.addTypedIngredients(copied);
+                } else if (content != null && !content.isEmpty()) {
+                    slotBuilder.addItemStacks(content);
+                }
             }
             List<Component> tooltip = recipe.getSlotTooltips().get(slot.name());
             if (tooltip != null && !tooltip.isEmpty()) {
                 slotBuilder.addRichTooltipCallback((view, lines) -> lines.addAll(tooltip));
             }
         }
+        for (List<String> group : recipe.getLinks()) {
+            builder.createFocusLink(group.stream().map(built::get).toArray(IIngredientAcceptor[]::new));
+        }
+    }
+
+    @Override
+    @Nullable
+    public ResourceLocation getRegistryName(RecipeData recipe) {
+        return recipe.getId();
     }
 
     /** 箭头、火焰、加号、贴图、进度条、提示区域；文字在 draw 里画 */

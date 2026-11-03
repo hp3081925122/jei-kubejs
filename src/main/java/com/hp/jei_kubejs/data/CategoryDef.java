@@ -83,11 +83,31 @@ public class CategoryDef {
         return slot(name, SlotDef.Role.RENDER_ONLY, x, y);
     }
 
-    private CategoryDef slot(String name, SlotDef.Role role, int x, int y) {
-        if (slots.containsKey(name)) {
-            JeiKubejs.LOGGER.warn("[JEI KubeJS] 分类 {} 的槽位 '{}' 重复定义，后一次覆盖前一次", id, name);
+    public CategoryDef inputTank(String name, int x, int y, int w, int h, long capacity) {
+        return tank(name, SlotDef.Role.INPUT, x, y, w, h, capacity);
+    }
+
+    public CategoryDef outputTank(String name, int x, int y, int w, int h, long capacity) {
+        return tank(name, SlotDef.Role.OUTPUT, x, y, w, h, capacity);
+    }
+
+    private CategoryDef tank(String name, SlotDef.Role role, int x, int y, int w, int h, long capacity) {
+        if (w <= 0 || h <= 0 || capacity <= 0) {
+            JeiKubejs.LOGGER.error("[JEI KubeJS] 分类 {} 的流体槽 '{}' 尺寸 {}x{} 或容量 {} 无效，已忽略", id, name, w, h, capacity);
+            return this;
         }
-        slots.put(name, new SlotDef(name, role, x, y));
+        return put(new SlotDef(name, role, x, y, w, h, capacity));
+    }
+
+    private CategoryDef slot(String name, SlotDef.Role role, int x, int y) {
+        return put(new SlotDef(name, role, x, y, 0, 0, 0));
+    }
+
+    private CategoryDef put(SlotDef slot) {
+        if (slots.containsKey(slot.name())) {
+            JeiKubejs.LOGGER.warn("[JEI KubeJS] 分类 {} 的槽位 '{}' 重复定义，后一次覆盖前一次", id, slot.name());
+        }
+        slots.put(slot.name(), slot);
         return this;
     }
 

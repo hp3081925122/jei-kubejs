@@ -16,6 +16,8 @@ import mezz.jei.api.registration.IGuiHandlerRegistration;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
+import mezz.jei.api.recipe.IRecipeManager;
+import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -34,6 +36,7 @@ public class JeiKubeJSJeiPlugin implements IModPlugin {
     private static final ResourceLocation UID = JeiKubejs.id("jei_plugin");
 
     private Map<ResourceLocation, ScriptRecipeCategory> categories = Map.of();
+    private RegisterRecipesKubeEvent deferredEvent;
 
     @Override
     public ResourceLocation getPluginUid() {
@@ -82,12 +85,35 @@ public class JeiKubeJSJeiPlugin implements IModPlugin {
             JeiKubejs.LOGGER.error("[JEI KubeJS] registerRecipes 脚本出错", e);
         }
 
+        groupByCategory(event.getRecipes()).forEach((id, list) -> registration.addRecipes(categories.get(id).getRecipeType(), list));
+        JeiKubejs.LOGGER.info("[JEI KubeJS] 添加了 {} 条配方", event.getRecipes().size());
+        deferredEvent = event.hasDeferred() ? event : null;
+    }
+
+    @Override
+    public void onRuntimeAvailable(IJeiRuntime runtime) {
+        RegisterRecipesKubeEvent event = deferredEvent;
+        deferredEvent = null;
+        if (event == null) {
+            return;
+        }
+        IRecipeManager manager = runtime.getRecipeManager();
+        List<RecipeData> recipes = event.runDeferred(manager, runtime.getJeiHelpers().getFocusFactory().getEmptyFocusGroup());
+        groupByCategory(recipes).forEach((id, list) -> manager.addRecipes(categories.get(id).getRecipeType(), list));
+        JeiKubejs.LOGGER.info("[JEI KubeJS] 运行时从 JEI 分类添加了 {} 条配方", recipes.size());
+    }
+
+    @Override
+    public void onRuntimeUnavailable() {
+        deferredEvent = null;
+    }
+
+    private static Map<ResourceLocation, List<RecipeData>> groupByCategory(List<RecipeData> recipes) {
         Map<ResourceLocation, List<RecipeData>> byCategory = new LinkedHashMap<>();
-        for (RecipeData recipe : event.getRecipes()) {
+        for (RecipeData recipe : recipes) {
             byCategory.computeIfAbsent(recipe.getCategory().getId(), k -> new ArrayList<>()).add(recipe);
         }
-        byCategory.forEach((id, list) -> registration.addRecipes(categories.get(id).getRecipeType(), list));
-        JeiKubejs.LOGGER.info("[JEI KubeJS] 添加了 {} 条配方", event.getRecipes().size());
+        return byCategory;
     }
 
     @Override

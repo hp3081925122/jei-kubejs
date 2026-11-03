@@ -1,6 +1,6 @@
 // JEI KubeJS example: put this file in kubejs/client_scripts/
-// In game: press U on an enchanting table, blast furnace or bookshelf to open the categories.
-// Works unchanged on 1.20.1 Forge and 1.21.1 NeoForge.
+// In game: press U on an enchanting table, blast furnace, bookshelf, cauldron or brewing stand to open the categories.
+// 1.21.1 NeoForge version.
 
 JEIKubeJSEvents.registerCategories(event => {
   // Slots and built-in drawables
@@ -64,6 +64,29 @@ JEIKubeJSEvents.registerCategories(event => {
       }
     })
     .catalyst('minecraft:bookshelf'))
+
+  // Fluid tanks
+  event.create('mypack:cauldron', cat => cat
+    .title(Text.of('Cauldron'))
+    .icon('minecraft:cauldron')
+    .size(110, 54)
+    .inputTank('water', 4, 4, 16, 46, 4000)   // x, y, width, height, capacity in mB
+    .inputSlot('in', 30, 18)
+    .arrow(52, 18, 120)
+    .outputSlot('out', 88, 18)
+    .catalyst('minecraft:cauldron'))
+
+  // A category filled from another JEI category, see fromCategory below
+  event.create('mypack:brewing_copy', cat => cat
+    .title(Text.of('Brewing (script)'))
+    .icon('minecraft:brewing_stand')
+    .size(110, 26)
+    .inputSlot('potion', 1, 4)
+    .plus(20, 6)
+    .inputSlot('ingredient', 36, 4)
+    .arrow(57, 4, 200)
+    .outputSlot('out', 88, 4)
+    .catalyst('minecraft:brewing_stand'))
 })
 
 JEIKubeJSEvents.registerRecipes(event => {
@@ -89,6 +112,11 @@ JEIKubeJSEvents.registerRecipes(event => {
     r.slot('in', recipe.input(0))
      .stack('out', recipe.output())
      .text('xp', `${Number(recipe.recipe().getExperience()).toFixed(1)} XP`)
+    // The recipe as JSON (objects and arrays). null when it cannot be read, see the Wiki.
+    let json = recipe.json()
+    if (json != null) {
+      r.slotTooltip('out', Text.gray(`Cooking time: ${json.cookingtime} ticks`))
+    }
   })
 
   event.add('mypack:library', r => r
@@ -98,4 +126,23 @@ JEIKubeJSEvents.registerRecipes(event => {
       Text.of('An enchanted book.'),
       Text.of('This description is long on purpose so the text area has to scroll.'),
       Text.of('Line 3'), Text.of('Line 4'), Text.of('Line 5'), Text.of('Line 6')))
+
+  // Fluids by id or '#tag', amount in mB. linkSlots makes the linked slots cycle together,
+  // so each log is shown next to its own stripped log. id() gives the recipe a fixed id for JEI bookmarks.
+  event.add('mypack:cauldron', r => r
+    .id('mypack:cauldron/stripping')
+    .fluid('water', 'minecraft:water', 1000)
+    .stack('in', 'minecraft:oak_log', 'minecraft:spruce_log', 'minecraft:birch_log')
+    .stack('out', 'minecraft:stripped_oak_log', 'minecraft:stripped_spruce_log', 'minecraft:stripped_birch_log')
+    .linkSlots('in', 'out'))
+
+  // Every recipe of an existing JEI category, read from the slots that category shows.
+  // Works for anything JEI displays, even recipes that are not datapack recipes (brewing, anvil, other mods' pages).
+  // JEI's brewing page has 4 inputs (3 bottles, then the ingredient) and 1 output.
+  // copy() keeps the slot's full content (every cycled item or fluid, with amounts and data).
+  event.fromCategory('mypack:brewing_copy', 'minecraft:brewing', (recipe, r) => {
+    r.copy('potion', recipe.input(0))
+     .copy('ingredient', recipe.input(3))
+     .copy('out', recipe.output(0))
+  })
 })
