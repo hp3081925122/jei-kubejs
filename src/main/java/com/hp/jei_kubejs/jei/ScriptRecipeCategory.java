@@ -116,6 +116,10 @@ public class ScriptRecipeCategory implements IRecipeCategory<RecipeData> {
             if (content != null && !content.isEmpty()) {
                 slotBuilder.addItemStacks(content);
             }
+            List<Component> tooltip = recipe.getSlotTooltips().get(slot.name());
+            if (tooltip != null && !tooltip.isEmpty()) {
+                slotBuilder.addRichTooltipCallback((view, lines) -> lines.addAll(tooltip));
+            }
         }
     }
 
