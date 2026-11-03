@@ -91,8 +91,6 @@ dependencies {
     implementation fg.deobf("curse.maven:rhino-416294:6186971")
     implementation fg.deobf("curse.maven:just-enough-characters-250702:8771525")
     implementation fg.deobf("curse.maven:jade-324717:8479276")
-    // 开发环境加入 Advanced Loot Info，查看战利品表和村民交易信息。
-    implementation fg.deobf("curse.maven:advanced-loot-info-1205426:7451552")
 }
 
 tasks.named('processResources', ProcessResources).configure {
